@@ -94,7 +94,7 @@
 - `orders` — данные заказа (со ссылкой на пользователя и адрес);
 - `order_items` — только атрибуты, зависящие от составного ключа `(order_id, product_id)`.
 
-Все таблицы итоговой схемы находятся в третьей нормальной форме.
+Все таблицы итоговой схемы находятся в третьей нормальной форме. Единственное осознанное исключение — столбец `orders.total_amount`: это кэшированная сумма заказа, которая вычисляется из `order_items` и хранится для ускорения отчётов. Такая денормализация допустима, но требует поддержания согласованности на стороне приложения или триггера; источником истины остаются позиции заказа.
 
 ## 4. Первичные ключи и их обоснование
 
@@ -124,9 +124,10 @@
 
 Запуск:
 
-'''bash
-psql -d marketplace_lab1 -f schema.sql
-'''
+```bash
+createdb marketplace
+psql -d marketplace -f schema.sql
+```
 
 ## 6. Словарь данных
 
@@ -217,7 +218,7 @@ psql -d marketplace_lab1 -f schema.sql
 | user_id | BIGINT | NOT NULL, FK → users.id | Покупатель |
 | address_id | BIGINT | NOT NULL, FK → addresses.id | Адрес доставки |
 | status | TEXT | NOT NULL, DEFAULT 'new', CHECK IN ('new','paid','shipped','delivered','cancelled') | Статус |
-| total_amount | NUMERIC(12,2) | NOT NULL, CHECK ≥ 0 | Сумма |
+| total_amount | NUMERIC(12,2) | NOT NULL, CHECK ≥ 0 | Сумма заказа (кэш, вычисляется из `order_items`) |
 | created_at | TIMESTAMPTZ | NOT NULL, DEFAULT now() | Дата оформления |
 
 ### `order_items` — позиции заказов
@@ -271,7 +272,8 @@ psql -d marketplace_lab1 -f schema.sql
 Скрипт `schema.sql` выполняется повторно и воссоздаёт схему с нуля:
 
 ```bash
-psql -d marketplace_lab1 -f schema.sql
+createdb marketplace
+psql -d marketplace -f schema.sql
 ```
 
 Проверка:
